@@ -8,7 +8,7 @@ const axios = require('axios').default;
 const wallet = process.argv[2]
 const my_account = process.argv[3]
 const url = "http://localhost:7076"
-var height = 25
+var height = -1
 
 // Utilities
 function httpPost(address: string, body: any, successCallback: any, failureCallback: any) {
@@ -31,16 +31,61 @@ function httpPost(address: string, body: any, successCallback: any, failureCallb
 }
 
 function logError(message: any) {
-    console.log("ERROR: " + message)
+    console.log("ERROR: " + JSON.stringify(message))
 }
 
 function log(message: string) {
     console.log("INFO: " + message)
 }
 
-function guessNumber(numbers: number) {
+function guessNumber(numbers) {
     return Math.floor(Math.random() * numbers) + 1;
 }
+
+function guessAlgo() {
+    var numberRange = 9
+    var numbers = []
+    var numbersLength = 5
+
+    for (var i = 0; i < numbersLength; i++) {
+        numbers.push(guessNumber(numberRange))
+    }
+
+    for(var i = numberRange; i > 0; i--) {
+        if (listContains(numbers, i)) {
+            return i
+        }
+    }
+    // Should never happen
+    return 0
+}
+
+function listContains(list, contains) {
+    for(let i of list){
+        if (i === contains) {
+            return true
+        }
+    }
+
+    return false
+}
+
+function setStartingHeight() {
+    // Height is hardcoded so us that as starting height
+    if (height != -1) {
+        return
+    }
+
+    getMyAccountBlockCount(response => {
+        height = Number(response.data.block_count)
+        log("Starting height is: " + height.toString())
+    },
+    error => {
+        logError("Failed to set the starting height. " + error)
+    })
+    
+}
+
 
 // Nano number!
 function execute() {
@@ -82,10 +127,10 @@ function distributeWinnings(response: any) {
         "count": difference.toString()
     }
 
-
-    var winningNumber = guessNumber(2)
+    var winningNumber = guessAlgo()
     var winningRaw = BigInt(winningNumber.toString() + "000000000000000000000000000")
     var winners = []
+    var players = []
     var receivedAmount = BigInt(0)
 
     log("Winning Amount: " + winningRaw.toString())
@@ -96,20 +141,17 @@ function distributeWinnings(response: any) {
             if ( block['type'] === 'receive') {
                 var amount = BigInt(block['amount'])
                 var account = block['account']
+                receivedAmount += amount
+                
+                if (listContains(players, account)) {
+                    log("Duplicate account found " + account)
+                    return
+                }
+                players.push(account)
+
                 log("Account: " + account)
                 log("Amount: " + amount.toString())
-                receivedAmount += amount
                 if (amount == winningRaw) {
-                    log("amount and winning raw equal")
-
-                    // make sure duplicate winners not allowed. 
-                    for(let winner of winners){
-                        if (winner === account) {
-                            log("Duplicate account found " + account)
-                            return
-                        }
-                    }
-
                     log("winner found " + account)
                     winners.push(account)
                 }
@@ -118,6 +160,18 @@ function distributeWinnings(response: any) {
 
         log("Received amount: " + receivedAmount.toString())
         log("Number of Winners: " + winners.length.toString())
+
+        if (winners.length === 0) {
+            log("NO WINNERS")
+            getMyAccountBlockCount(response => {
+                height = Number(response.data.block_count)
+                log("New height = " + height)
+            },
+            error => {
+                logError("Failure to get my account block count. " + error)
+            })
+            return
+        }
 
         // At this point we should have a list of `winners` and the amount that has been recieved
         // Now we just need to figure out how to distribute
@@ -147,27 +201,25 @@ function sendPayment(account: string, payment: BigInt) {
         "amount": payment.toString()
     }
 
-    httpPost(url, body, function(response) {
-
-        log("Successfully sent " + payment.toString() + " to " + account)
+    httpPost(url, body, response => {
+        log("Successfully sent " + payment.toString() + " raw to " + account)
         log(JSON.stringify(response.data))
 
-        getMyAccountBlockCount(function(response){
+        getMyAccountBlockCount(response  => {
             var current_height = Number(response.data.block_count)
             height = current_height
             log("New game height is: " + height.toString())
         }, logError)
 
     },
-    function(error) {
+    error => {
         logError("Failed to send payment to " + account)
         console.log(error)
     })
-
-
 }
 
 function main() {
+    setStartingHeight()
     execute()
     setInterval(function() {
         execute()
