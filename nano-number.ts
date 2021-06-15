@@ -3,12 +3,19 @@
 import { fail } from "assert/strict";
 import { exec } from "child_process";
 import { mainModule } from "process";
+import fs from 'fs';
+
 
 const axios = require('axios').default;
 const wallet = process.argv[2]
 const my_account = process.argv[3]
 const url = "http://ip6-localhost:7072"
 var height = -1
+const data_dir = "./data/"
+const winners_file = data_dir + "winners"
+const winning_number_file = data_dir + "winning-number"
+const game_number_file = data_dir + "game-number"
+
 
 // Utilities
 function httpPost(address: string, body: any, successCallback: any, failureCallback: any) {
@@ -86,6 +93,28 @@ function setStartingHeight() {
     
 }
 
+function writeFile(path: string, contents: string) {
+    fs.writeFileSync(path, contents)
+}
+
+function writeWinners(winners: string[]) {
+    writeFile(winners_file, JSON.stringify(winners))
+}
+
+function writeWinningNumber(number: number) {
+    writeFile(winning_number_file, number.toString())
+}
+
+function writeGameNumber(number: number) {
+    writeFile(game_number_file, number.toString())
+}
+ 
+function readGameNumber(): number {
+    var result = fs.readFileSync(game_number_file,'utf8');
+    return Number(result)
+}
+
+
 
 // Nano number!
 function execute() {
@@ -134,6 +163,8 @@ function distributeWinnings(response: any) {
     var receivedAmount = BigInt(0)
 
     log("Winning Amount: " + winningRaw.toString())
+    writeWinningNumber(winningNumber)
+    writeWinners([])
 
     httpPost(url, body, function(response) {
         var blocks = response.data.history
@@ -172,6 +203,8 @@ function distributeWinnings(response: any) {
             })
             return
         }
+
+        writeWinners(winners)
 
         // At this point we should have a list of `winners` and the amount that has been recieved
         // Now we just need to figure out how to distribute
