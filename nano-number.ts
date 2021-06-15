@@ -3,7 +3,7 @@
 import { fail } from "assert/strict";
 import { exec } from "child_process";
 import { mainModule } from "process";
-import fs from 'fs';
+import * as fs from 'fs';
 
 
 const axios = require('axios').default;
