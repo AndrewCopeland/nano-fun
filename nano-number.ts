@@ -7,7 +7,7 @@ import { mainModule } from "process";
 const axios = require('axios').default;
 const wallet = process.argv[2]
 const my_account = process.argv[3]
-const url = "http://localhost:7076"
+const url = "http://ip6-localhost:7072"
 var height = -1
 
 // Utilities
@@ -45,7 +45,7 @@ function guessNumber(numbers) {
 function guessAlgo() {
     var numberRange = 9
     var numbers = []
-    var numbersLength = 5
+    var numbersLength = guessNumber(9)
 
     for (var i = 0; i < numbersLength; i++) {
         numbers.push(guessNumber(numberRange))
@@ -128,7 +128,7 @@ function distributeWinnings(response: any) {
     }
 
     var winningNumber = guessAlgo()
-    var winningRaw = BigInt(winningNumber.toString() + "000000000000000000000000000")
+    var winningRaw = BigInt(winningNumber.toString() + "00000000000000000000000000000")
     var winners = []
     var players = []
     var receivedAmount = BigInt(0)
