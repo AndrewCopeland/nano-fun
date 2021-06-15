@@ -256,7 +256,7 @@ function main() {
     execute()
     setInterval(function() {
         execute()
-    }, 60 * 1000);
+    }, 10 * 60 * 1000);
 }
 
 main()
