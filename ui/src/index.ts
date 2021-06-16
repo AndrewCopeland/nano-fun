@@ -4,7 +4,7 @@ import * as fs from 'fs';
 const data_dir = "../data/"
 const winners_file = data_dir + "winners"
 const winning_number_file = data_dir + "winning-number"
-const game_number_file = data_dir + "game-number"
+const game_time = data_dir + "game-time"
 
 
 const app = express();
@@ -18,16 +18,29 @@ function getWinningNumber(): number {
   return Number(fs.readFileSync(winning_number_file,'utf8'));
 }
 
+function getGameTime(): string {
+  return fs.readFileSync(game_time,'utf8');
+}
+
 app.get('/', (req, res) => {
   var winners = getWinners()
   var winningNumber = getWinningNumber()
+  var time = getGameTime()
   var result = `
   <html>
     <body>
     <h1>The Bananumber Game</h1>
     <h3>Winning Number: ${winningNumber}</h3>
     <h3>Winners: ${winners}</h3>
+    <h3 id="time">Date Played: ${time}</h3>
     </body>
+    <script>
+      var obj = document.getElementById("time")
+      var date = new Date(0);
+      var epoch = Number(obj.innerText);
+      d.setUTCSeconds(epoch);
+      obj.innerText = d;
+    </script>
   </html>
   `
   res.send(result);
