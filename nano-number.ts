@@ -11,6 +11,7 @@ const wallet = process.argv[2]
 const my_account = process.argv[3]
 const url = "http://ip6-localhost:7072"
 var height = -1
+var roll_over = BigInt(0)
 const data_dir = "./data/"
 const winners_file = data_dir + "winners"
 const winning_number_file = data_dir + "winning-number"
@@ -199,6 +200,7 @@ function distributeWinnings(response: any) {
         log("Number of Winners: " + winners.length.toString())
 
         if (winners.length === 0) {
+            roll_over += receivedAmount
             log("NO WINNERS")
             getMyAccountBlockCount(response => {
                 height = Number(response.data.block_count)
@@ -208,6 +210,10 @@ function distributeWinnings(response: any) {
                 logError("Failure to get my account block count. " + error)
             })
             return
+        }
+
+        if (roll_over > 0) {
+            receivedAmount += roll_over
         }
 
         writeWinners(winners)
