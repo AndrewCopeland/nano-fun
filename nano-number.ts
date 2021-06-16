@@ -53,7 +53,7 @@ function guessNumber(numbers) {
 function guessAlgo() {
     var numberRange = 9
     var numbers = []
-    var numbersLength = guessNumber(9)
+    var numbersLength = guessNumber(3)
     log("Set Size: " + numbersLength.toString())
 
     for (var i = 0; i < numbersLength; i++) {
