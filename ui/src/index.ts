@@ -38,8 +38,8 @@ app.get('/', (req, res) => {
       var obj = document.getElementById("time")
       var date = new Date(0);
       var epoch = Number(obj.innerText);
-      d.setUTCSeconds(epoch);
-      obj.innerText = d;
+      date.setUTCSeconds(epoch);
+      obj.innerText = date;
     </script>
   </html>
   `
