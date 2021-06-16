@@ -39,7 +39,7 @@ app.get('/', (req, res) => {
       var date = new Date(0);
       var epoch = Number(obj.innerText);
       date.setUTCSeconds(epoch);
-      obj.innerText = date;
+      obj.innerText = "Date Played: " + date.toString();
     </script>
   </html>
   `
