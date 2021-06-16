@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
     <h1>The Bananumber Game</h1>
     <h3>Winning Number: ${winningNumber}</h3>
     <h3>Winners: ${winners}</h3>
-    <h3 id="time">Date Played: ${time}</h3>
+    <h3 id="time">${time}</h3>
     </body>
     <script>
       var obj = document.getElementById("time")
