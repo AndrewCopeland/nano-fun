@@ -15,6 +15,7 @@ const data_dir = "./data/"
 const winners_file = data_dir + "winners"
 const winning_number_file = data_dir + "winning-number"
 const game_number_file = data_dir + "game-number"
+const game_time_file = data_dir + "game-time"
 
 
 // Utilities
@@ -53,6 +54,7 @@ function guessAlgo() {
     var numberRange = 9
     var numbers = []
     var numbersLength = guessNumber(9)
+    log("Set Size: " + numbersLength.toString())
 
     for (var i = 0; i < numbersLength; i++) {
         numbers.push(guessNumber(numberRange))
@@ -105,6 +107,10 @@ function writeWinningNumber(number: number) {
     writeFile(winning_number_file, number.toString())
 }
 
+function writeGameTime(time: number) {
+    writeFile(game_time_file, time.toString())
+}
+
 function writeGameNumber(number: number) {
     writeFile(game_number_file, number.toString())
 }
@@ -113,7 +119,6 @@ function readGameNumber(): number {
     var result = fs.readFileSync(game_number_file,'utf8');
     return Number(result)
 }
-
 
 
 // Nano number!
@@ -165,6 +170,7 @@ function distributeWinnings(response: any) {
     log("Winning Amount: " + winningRaw.toString())
     writeWinningNumber(winningNumber)
     writeWinners([])
+    writeGameTime(Date.now())
 
     httpPost(url, body, function(response) {
         var blocks = response.data.history
