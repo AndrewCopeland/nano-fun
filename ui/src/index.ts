@@ -21,7 +21,16 @@ function getWinningNumber(): number {
 app.get('/', (req, res) => {
   var winners = getWinners()
   var winningNumber = getWinningNumber()
-  res.send(`The Bananumber Game\n  Winning Number: ${winningNumber}\n  Winners: ${winners}`);
+  var result = `
+  <html>
+    <body>
+    <h1>The Bananumber Game</h1>
+    <h3>Winning Number: ${winningNumber}</h3>
+    <h3>Winners: ${winners}</h3>
+    </body>
+  </html>
+  `
+  res.send(result);
 });
 
 app.listen(port, () => {
