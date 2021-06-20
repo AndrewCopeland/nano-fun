@@ -300,7 +300,7 @@ function stats() {
     log("Getting stats of current game")
     // Get my account balance and write to the current pot file
     getAccountBalance(my_account, response => {
-        writeCurrentPot(Number(BigInt(response.balance) / BigInt('100000000000000000000000000000')))
+        writeCurrentPot(Number(BigInt(response.data.balance) / BigInt('100000000000000000000000000000')))
     },
     error => {
         logError("Failed to get account balance for " + my_account + ". " + error)
