@@ -329,7 +329,7 @@ function stats() {
                 var account = block['account']
                 var data = {
                     "account": account,
-                    "number": number
+                    "number": Number(number)
                 }
 
                 currentPlayers.push(data)
