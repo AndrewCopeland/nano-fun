@@ -48,7 +48,7 @@ function getLastWinningNumber(): number {
 }
 
 app.get('/api/current/pot', (req, res) => {
-  res.send(getCurrentPot());
+  res.send(getCurrentPot().toString());
 });
 
 app.get('/api/current/players', (req, res) => {
@@ -56,7 +56,7 @@ app.get('/api/current/players', (req, res) => {
 });
 
 app.get('/api/current/game-start', (req, res) => {
-  res.send(getCurrentGameStart());
+  res.send(getCurrentGameStart().toString());
 });
 
 app.get('/api/last/players', (req, res) => {
@@ -68,13 +68,12 @@ app.get('/api/last/winners', (req, res) => {
 });
 
 app.get('/api/last/pot', (req, res) => {
-  res.send(getLastPot());
+  res.send(getLastPot().toString());
 });
 
 app.get('/api/last/winning-number', (req, res) => {
-  res.send(getLastWinningNumber());
+  res.send(getLastWinningNumber().toString());
 });
-
 
 app.listen(port, () => {
   console.log(`server is listening on ${port}`);
