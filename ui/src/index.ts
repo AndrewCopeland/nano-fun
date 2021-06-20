@@ -40,7 +40,7 @@ function getLastWinners(): string[] {
 }
 
 function getLastPot(): number {
-  return Number(readFile(last_pot_file))
+  return Number(BigInt(readFile(last_pot_file)) / BigInt('100000000000000000000000000000')))
 }
 
 function getLastWinningNumber(): number {
