@@ -17,6 +17,9 @@ const winners_file = data_dir + "winners"
 const winning_number_file = data_dir + "winning-number"
 const game_number_file = data_dir + "game-number"
 const game_time_file = data_dir + "game-time"
+const players_file = data_dir + "players"
+const current_pot_file = data_dir + "current_pot"
+const starting_game_number = 0
 
 
 // Utilities
@@ -37,6 +40,14 @@ function httpPost(address: string, body: any, successCallback: any, failureCallb
       .catch(function (error) {
         failureCallback(error)
       });
+}
+
+function getAccountBalance(account: string, successCallback: any, failureCallback: any) {
+    var body = {
+        "action": "account_balance",
+        "account": account
+    }
+    httpPost(url, body, successCallback, failureCallback)
 }
 
 function logError(message: any) {
@@ -100,8 +111,20 @@ function writeFile(path: string, contents: string) {
     fs.writeFileSync(path, contents)
 }
 
+function readFile(path: string): string {
+    return fs.readFileSync(path,'utf8');
+}
+
 function writeWinners(winners: string[]) {
     writeFile(winners_file, JSON.stringify(winners))
+}
+
+function writePlayers(players: string[]) {
+    writeFile(players_file, JSON.stringify(players))
+}
+
+function readPlayers(): string[] {
+    return JSON.parse(readFile(players_file))
 }
 
 function writeWinningNumber(number: number) {
@@ -117,8 +140,11 @@ function writeGameNumber(number: number) {
 }
  
 function readGameNumber(): number {
-    var result = fs.readFileSync(game_number_file,'utf8');
-    return Number(result)
+    return Number(readFile(game_number_file))
+}
+
+function writeCurrentPot(balance: string) {
+    writeFile(current_pot_file, balance)
 }
 
 
@@ -198,6 +224,7 @@ function distributeWinnings(response: any) {
 
         log("Received amount: " + receivedAmount.toString())
         log("Number of Winners: " + winners.length.toString())
+        writePlayers(players)
 
         if (winners.length === 0) {
             roll_over += receivedAmount
@@ -215,7 +242,6 @@ function distributeWinnings(response: any) {
         if (roll_over > 0) {
             receivedAmount += roll_over
         }
-
         writeWinners(winners)
 
         // At this point we should have a list of `winners` and the amount that has been recieved
@@ -263,12 +289,25 @@ function sendPayment(account: string, payment: BigInt) {
     })
 }
 
+function stats() {
+    getAccountBalance(my_account, response => {
+        writeCurrentPot(response.balance)
+    },
+    error => {
+        logError("Failed to get account balance for " + my_account + ". " + error)
+    })
+}
+
 function main() {
     setStartingHeight()
     execute()
     setInterval(function() {
         execute()
     }, 10 * 60 * 1000);
+
+    setInterval(() => {
+        stats()
+    }, 60 * 1000);
 }
 
 main()

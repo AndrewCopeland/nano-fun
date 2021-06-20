@@ -5,22 +5,33 @@ const data_dir = "../data/"
 const winners_file = data_dir + "winners"
 const winning_number_file = data_dir + "winning-number"
 const game_time = data_dir + "game-time"
+const players_file = data_dir + "players"
 
 
 const app = express();
 const port = 3000;
 
+function readFile(path: string): string {
+  return fs.readFileSync(path,'utf8');
+}
+
 function getWinners(): string {
-  return fs.readFileSync(winners_file,'utf8');
+  return readFile(winners_file);
 }
 
 function getWinningNumber(): number {
-  return Number(fs.readFileSync(winning_number_file,'utf8'));
+  return Number(readFile(winning_number_file));
 }
 
 function getGameTime(): string {
-  return fs.readFileSync(game_time,'utf8');
+  return readFile(game_time);
 }
+
+function getCurrentPlayers(): string[] {
+  return JSON.parse(readFile(players_file))
+}
+
+
 
 app.get('/', (req, res) => {
   var winners = getWinners()
@@ -44,6 +55,23 @@ app.get('/', (req, res) => {
   </html>
   `
   res.send(result);
+});
+
+app.get('/api/current/players', (req, res) => {
+  res.send(getCurrentPlayers());
+});
+
+app.get('/api/last/winners', (req, res) => {
+  res.send(getWinners());
+});
+
+app.get('/api/last/winning-number', (req, res) => {
+  res.send(getWinningNumber());
+});
+
+
+app.get('/api/last/game-time', (req, res) => {
+  res.send(getGameTime());
 });
 
 app.listen(port, () => {
