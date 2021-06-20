@@ -13,10 +13,16 @@ const url = "http://ip6-localhost:7072"
 var height = -1
 var roll_over = BigInt(0)
 const data_dir = "./data/"
-const winners_file = data_dir + "winners"
-const winning_number_file = data_dir + "winning-number"
-const game_number_file = data_dir + "game-number"
-const game_time_file = data_dir + "game-time"
+
+const current_game_time = data_dir + "current-game-time"
+const current_players_file = data_dir + "current-players"
+const current_pot_file = data_dir + "current-pot"
+
+const last_players_file = data_dir + "last-players"
+const last_pot_file = data_dir + "last-pot"
+const last_winners_file = data_dir + "last-winners"
+const last_winning_number_file = data_dir + "last-winning-number"
+
 
 
 // Utilities
@@ -37,6 +43,14 @@ function httpPost(address: string, body: any, successCallback: any, failureCallb
       .catch(function (error) {
         failureCallback(error)
       });
+}
+
+function getAccountBalance(account: string, successCallback: any, failureCallback: any) {
+    var body = {
+        "action": "account_balance",
+        "account": account
+    }
+    httpPost(url, body, successCallback, failureCallback)
 }
 
 function logError(message: any) {
@@ -100,27 +114,33 @@ function writeFile(path: string, contents: string) {
     fs.writeFileSync(path, contents)
 }
 
-function writeWinners(winners: string[]) {
-    writeFile(winners_file, JSON.stringify(winners))
+function writeLastWinners(winners: string[]) {
+    writeFile(last_winners_file, JSON.stringify(winners))
 }
 
-function writeWinningNumber(number: number) {
-    writeFile(winning_number_file, number.toString())
+function writeLastWinningNumber(number: number) {
+    writeFile(last_winning_number_file, number.toString())
 }
 
-function writeGameTime(time: number) {
-    writeFile(game_time_file, time.toString())
+function writeLastPlayers(players: any) {
+    writeFile(last_players_file, JSON.stringify(players))
 }
 
-function writeGameNumber(number: number) {
-    writeFile(game_number_file, number.toString())
-}
- 
-function readGameNumber(): number {
-    var result = fs.readFileSync(game_number_file,'utf8');
-    return Number(result)
+function writeCurrentPlayers(players: any) {
+    writeFile(current_players_file, JSON.stringify(players))
 }
 
+function writeCurrentGameTime(time: number) {
+    writeFile(current_game_time, time.toString())
+}
+
+function writeCurrentPot(balance: number) {
+    writeFile(current_pot_file, balance.toString())
+}
+
+function writeLastPot(balance: number) {
+    writeFile(last_pot_file, balance.toString())
+}
 
 // Nano number!
 function execute() {
@@ -133,6 +153,16 @@ function getMyAccountBlockCount(successCallback: any, failureCallback: any) {
     var body = {  
         "action": "account_block_count",
         "account": my_account
+    }
+
+    httpPost(url, body, successCallback, failureCallback)
+}
+
+function getMyAccountHistory(count: number, successCallback: any, failureCallback: any) {
+    var body = {  
+        "action": "account_history",
+        "account": my_account,
+        "count": count.toString()
     }
 
     httpPost(url, body, successCallback, failureCallback)
@@ -169,9 +199,9 @@ function distributeWinnings(response: any) {
     var receivedAmount = BigInt(0)
 
     log("Winning Amount: " + winningRaw.toString())
-    writeWinningNumber(winningNumber)
-    writeWinners([])
-    writeGameTime(Date.now())
+    writeLastWinningNumber(winningNumber)
+    writeLastWinners([])
+    writeCurrentGameTime(Date.now())
 
     httpPost(url, body, function(response) {
         var blocks = response.data.history
@@ -198,6 +228,8 @@ function distributeWinnings(response: any) {
 
         log("Received amount: " + receivedAmount.toString())
         log("Number of Winners: " + winners.length.toString())
+        writeLastPlayers(players)
+        writeLastPot(Number(receivedAmount))
 
         if (winners.length === 0) {
             roll_over += receivedAmount
@@ -216,7 +248,8 @@ function distributeWinnings(response: any) {
             receivedAmount += roll_over
         }
 
-        writeWinners(winners)
+        writeLastWinners(winners)
+        
 
         // At this point we should have a list of `winners` and the amount that has been recieved
         // Now we just need to figure out how to distribute
@@ -263,12 +296,67 @@ function sendPayment(account: string, payment: BigInt) {
     })
 }
 
+function stats() {
+    log("Getting stats of current game")
+    // Get my account balance and write to the current pot file
+    getAccountBalance(my_account, response => {
+        writeCurrentPot(Number(BigInt(response.balance) / BigInt('100000000000000000000000000000')))
+    },
+    error => {
+        logError("Failed to get account balance for " + my_account + ". " + error)
+    })
+
+    // Get all current players of the game
+    var currentPlayers = []
+    getMyAccountBlockCount(response => {
+        var currentHeight = Number(response.data.block_count)
+        var difference = currentHeight - height
+        // Make sure atleast one player is playing
+        if (difference < 1) {
+            writeCurrentPlayers(currentPlayers)
+            return
+        }
+
+        getMyAccountHistory(difference, response => {
+            var blocks = response.data.history
+            blocks.forEach(block => {
+                // Only care about receives
+                if ( block['type'] !== 'receive') { 
+                    return
+                }
+
+                var number = BigInt(block['amount']) / BigInt('100000000000000000000000000000')
+                var account = block['account']
+                var data = {
+                    "account": account,
+                    "number": number
+                }
+
+                currentPlayers.push(data)
+            });
+
+            writeCurrentPlayers(currentPlayers)
+        },
+        error => {
+            logError("Failed to get my account history. " + error)
+        })
+    },
+    error => {
+        logError("Failed to get my account block count. " + error)
+    })
+}
+
 function main() {
     setStartingHeight()
     execute()
     setInterval(function() {
         execute()
     }, 10 * 60 * 1000);
+
+    stats()
+    setInterval(() => {
+        stats()
+    }, 60 * 1000);
 }
 
 main()

@@ -2,49 +2,79 @@ import express from 'express';
 import * as fs from 'fs';
 
 const data_dir = "../data/"
-const winners_file = data_dir + "winners"
-const winning_number_file = data_dir + "winning-number"
-const game_time = data_dir + "game-time"
 
+const current_game_time = data_dir + "current-game-time"
+const current_players_file = data_dir + "current-players"
+const current_pot_file = data_dir + "current-pot"
+
+const last_players_file = data_dir + "last-players"
+const last_pot_file = data_dir + "last-pot"
+const last_winners_file = data_dir + "last-winners"
+const last_winning_number_file = data_dir + "last-winning-number"
 
 const app = express();
 const port = 3000;
 
-function getWinners(): string {
-  return fs.readFileSync(winners_file,'utf8');
+function readFile(path: string): string {
+  return fs.readFileSync(path,'utf8');
 }
 
-function getWinningNumber(): number {
-  return Number(fs.readFileSync(winning_number_file,'utf8'));
+function getCurrentPot(): number {
+  return Number(readFile(current_pot_file))
 }
 
-function getGameTime(): string {
-  return fs.readFileSync(game_time,'utf8');
+function getCurrentPlayers(): string[] {
+  return JSON.parse(readFile(current_players_file))
 }
 
-app.get('/', (req, res) => {
-  var winners = getWinners()
-  var winningNumber = getWinningNumber()
-  var time = getGameTime()
-  var result = `
-  <html>
-    <body>
-    <h1>The Bananumber Game</h1>
-    <h3>Winning Number: ${winningNumber}</h3>
-    <h3>Winners: ${winners}</h3>
-    <h3 id="time">${time}</h3>
-    </body>
-    <script>
-      var obj = document.getElementById("time")
-      var date = new Date(0);
-      var epoch = Number(obj.innerText);
-      date.setUTCSeconds(epoch);
-      obj.innerText = "Date Played: " + date.toString();
-    </script>
-  </html>
-  `
-  res.send(result);
+function getCurrentGameStart(): number {
+  return Number(readFile(current_game_time))
+}
+
+function getLastPlayers(): any {
+  return JSON.parse(readFile(last_players_file))
+}
+
+function getLastWinners(): string[] {
+  return JSON.parse(readFile(last_winners_file))
+}
+
+function getLastPot(): number {
+  return Number(readFile(last_pot_file))
+}
+
+function getLastWinningNumber(): number {
+  return Number(readFile(last_winning_number_file))
+}
+
+app.get('/api/current/pot', (req, res) => {
+  res.send(getCurrentPot());
 });
+
+app.get('/api/current/players', (req, res) => {
+  res.send(getCurrentPlayers());
+});
+
+app.get('/api/current/game-start', (req, res) => {
+  res.send(getCurrentGameStart());
+});
+
+app.get('/api/last/players', (req, res) => {
+  res.send(getLastPlayers());
+});
+
+app.get('/api/last/winners', (req, res) => {
+  res.send(getLastWinners());
+});
+
+app.get('/api/last/pot', (req, res) => {
+  res.send(getLastPot());
+});
+
+app.get('/api/last/winning-number', (req, res) => {
+  res.send(getLastWinningNumber());
+});
+
 
 app.listen(port, () => {
   console.log(`server is listening on ${port}`);
