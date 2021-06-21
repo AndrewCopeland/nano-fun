@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { json } from 'express';
 import * as fs from 'fs';
 
 const data_dir = "../data/"
@@ -11,6 +11,10 @@ const last_players_file = data_dir + "last-players"
 const last_pot_file = data_dir + "last-pot"
 const last_winners_file = data_dir + "last-winners"
 const last_winning_number_file = data_dir + "last-winning-number"
+const current_game_number_file = data_dir + "game-number"
+
+const game_history_file = data_dir + "history"
+
 
 const app = express();
 const port = 3000;
@@ -31,6 +35,10 @@ function getCurrentGameStart(): number {
   return Number(readFile(current_game_time))
 }
 
+function getCurrentGameNumber(): number {
+  return Number(readFile(current_game_number_file))
+}
+
 function getLastPlayers(): any {
   return JSON.parse(readFile(last_players_file))
 }
@@ -40,12 +48,20 @@ function getLastWinners(): string[] {
 }
 
 function getLastPot(): number {
-  return Number(BigInt(readFile(last_pot_file)) / BigInt('100000000000000000000000000000')))
+  return Number(BigInt(readFile(last_pot_file)) / BigInt('100000000000000000000000000000'))
 }
 
 function getLastWinningNumber(): number {
   return Number(readFile(last_winning_number_file))
 }
+
+function getGameHistory(): any {
+  return JSON.parse(readFile(game_history_file))
+}
+
+app.get('/api/current/game-number', (req, res) => {
+  res.send(getCurrentGameNumber().toString());
+});
 
 app.get('/api/current/pot', (req, res) => {
   res.send(getCurrentPot().toString());
@@ -73,6 +89,15 @@ app.get('/api/last/pot', (req, res) => {
 
 app.get('/api/last/winning-number', (req, res) => {
   res.send(getLastWinningNumber().toString());
+});
+
+app.get('/api/last/history', (req, res) => {
+  var history = getGameHistory()
+  res.send(JSON.stringify(history[history.length-1]));
+});
+
+app.get('/api/history', (req, res) => {
+  res.send(JSON.stringify(getGameHistory()));
 });
 
 app.listen(port, () => {

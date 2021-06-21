@@ -17,11 +17,14 @@ const data_dir = "./data/"
 const current_game_time = data_dir + "current-game-time"
 const current_players_file = data_dir + "current-players"
 const current_pot_file = data_dir + "current-pot"
+const current_game_number_file = data_dir + "game-number"
 
 const last_players_file = data_dir + "last-players"
 const last_pot_file = data_dir + "last-pot"
 const last_winners_file = data_dir + "last-winners"
 const last_winning_number_file = data_dir + "last-winning-number"
+
+const game_history_file = data_dir + "history"
 
 
 
@@ -114,6 +117,11 @@ function writeFile(path: string, contents: string) {
     fs.writeFileSync(path, contents)
 }
 
+function readFile(path: string): string {
+    return fs.readFileSync(path,'utf8');
+}
+
+// Last functions
 function writeLastWinners(winners: string[]) {
     writeFile(last_winners_file, JSON.stringify(winners))
 }
@@ -126,6 +134,11 @@ function writeLastPlayers(players: any) {
     writeFile(last_players_file, JSON.stringify(players))
 }
 
+function writeLastPot(balance: number) {
+    writeFile(last_pot_file, balance.toString())
+}
+
+// Current functions
 function writeCurrentPlayers(players: any) {
     writeFile(current_players_file, JSON.stringify(players))
 }
@@ -138,8 +151,35 @@ function writeCurrentPot(balance: number) {
     writeFile(current_pot_file, balance.toString())
 }
 
-function writeLastPot(balance: number) {
-    writeFile(last_pot_file, balance.toString())
+function writeCurrentGameNumber(id: number) {
+    writeFile(current_game_number_file, id.toString())
+}
+
+function readCurrentGameNumber(): number {
+    return Number(readFile(current_game_number_file))
+}
+
+function readGameHistory(): History[] {
+    return JSON.parse(game_history_file)
+}
+
+function appendGameHistory(history: History) {
+    writeFile(game_history_file, JSON.stringify(readGameHistory().push(history)))
+}
+
+interface Player {
+    account: string;
+    number: number;
+}
+
+interface History {
+    id: number;
+    pot: BigInt;
+    distribution: BigInt;
+    winning_number: number;
+    time_played: number;
+    players: Player[];
+    winners: string[];
 }
 
 // Nano number!
@@ -196,12 +236,14 @@ function distributeWinnings(response: any) {
     var winningRaw = BigInt(winningNumber.toString() + "00000000000000000000000000000")
     var winners = []
     var players = []
+    var playerObjs = []
     var receivedAmount = BigInt(0)
 
     log("Winning Amount: " + winningRaw.toString())
     writeLastWinningNumber(winningNumber)
     writeLastWinners([])
-    writeCurrentGameTime(Date.now())
+    var dateTime = Date.now()
+    writeCurrentGameTime(dateTime)
 
     httpPost(url, body, function(response) {
         var blocks = response.data.history
@@ -216,6 +258,12 @@ function distributeWinnings(response: any) {
                     return
                 }
                 players.push(account)
+
+                var playerObj: Player = {
+                    account: account,
+                    number: Number(amount / BigInt('100000000000000000000000000000'))
+                }
+                playerObjs.push(playerObj)
 
                 log("Account: " + account)
                 log("Amount: " + amount.toString())
@@ -255,8 +303,22 @@ function distributeWinnings(response: any) {
         // Now we just need to figure out how to distribute
         var payment = receivedAmount / BigInt(winners.length)
         log("Payment being distributed: " + payment.toString())
-        
         sendPayments(winners, payment)
+
+        // Append to game history file
+        var gameHistory: History = {
+            id: readCurrentGameNumber(),
+            pot: receivedAmount,
+            distribution: payment,
+            winning_number: winningNumber,
+            time_played: dateTime,
+            players: playerObjs,
+            winners: winners
+        }
+        appendGameHistory(gameHistory)
+
+        // increment 1 for the current game
+        writeCurrentGameNumber(readCurrentGameNumber() + 1)
     },
     function(error) {
         logError("Error occured while calculating/distributing payments:")
