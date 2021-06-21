@@ -30,32 +30,6 @@ Return a list of json objects representing all past games. Each game has a uniqu
 ]
 ```
 
-### /api/history/last
-Similiar to the endpoint above except only the most recent game is returned
-```json
-{
-    "id": 567,
-    "pot": 60,
-    "distribution": 30,
-    "winning_number": 7,
-    "time_played": 6378399373,
-    "players": [
-        {
-            "account": "ban_73738ssdfsdf",
-            "number": 7
-        },
-        {
-            "account": "ban_1xasssdfsd8",
-            "number": 7
-        }
-    ],
-    "winners": [
-        "ban_73738ssdfsdf",
-        "ban_1xasssdfsd8"
-    ]
-}
-```
-
 ### /api/current/pot
 Returns a float that represents the current pot
 ```
@@ -81,6 +55,12 @@ Returns a list of the current players and the number each player guessed
 Returns an integer representing the time in which that last game finished playing. This is epoch time and should be converted to local time for the user.
 ```
 16865658494
+```
+
+### /api/current/game-number
+Returns an integer representing the current game number.
+```
+42
 ```
 
 ### /api/last/players
@@ -117,5 +97,31 @@ Returns a float that represents the pot of the last game
 Returns an integer representing the winning number for the last game.
 ```
 7
+```
+
+### /api/last/history
+Similiar to `/api/history` endpoint except only the most recent game is returned
+```json
+{
+    "id": 567,
+    "pot": 60,
+    "distribution": 30,
+    "winning_number": 7,
+    "time_played": 6378399373,
+    "players": [
+        {
+            "account": "ban_73738ssdfsdf",
+            "number": 7
+        },
+        {
+            "account": "ban_1xasssdfsd8",
+            "number": 7
+        }
+    ],
+    "winners": [
+        "ban_73738ssdfsdf",
+        "ban_1xasssdfsd8"
+    ]
+}
 ```
 
