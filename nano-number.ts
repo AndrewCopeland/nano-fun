@@ -279,6 +279,21 @@ function distributeWinnings(response: any) {
         writeLastPlayers(players)
         writeLastPot(Number(receivedAmount))
 
+        // Append to game history file
+        var gameHistory: History = {
+            id: readCurrentGameNumber(),
+            pot: receivedAmount,
+            distribution: payment,
+            winning_number: winningNumber,
+            time_played: dateTime,
+            players: playerObjs,
+            winners: winners
+        }
+        appendGameHistory(gameHistory)
+
+        // increment 1 for the current game
+        writeCurrentGameNumber(readCurrentGameNumber() + 1)
+
         if (winners.length === 0) {
             roll_over += receivedAmount
             log("NO WINNERS")
@@ -304,21 +319,6 @@ function distributeWinnings(response: any) {
         var payment = receivedAmount / BigInt(winners.length)
         log("Payment being distributed: " + payment.toString())
         sendPayments(winners, payment)
-
-        // Append to game history file
-        var gameHistory: History = {
-            id: readCurrentGameNumber(),
-            pot: receivedAmount,
-            distribution: payment,
-            winning_number: winningNumber,
-            time_played: dateTime,
-            players: playerObjs,
-            winners: winners
-        }
-        appendGameHistory(gameHistory)
-
-        // increment 1 for the current game
-        writeCurrentGameNumber(readCurrentGameNumber() + 1)
     },
     function(error) {
         logError("Error occured while calculating/distributing payments:")
