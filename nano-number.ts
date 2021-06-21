@@ -413,7 +413,7 @@ function main() {
     execute()
     setInterval(function() {
         execute()
-    }, 10 * 60 * 1000);
+    }, 1000);
 
     stats()
     setInterval(() => {
