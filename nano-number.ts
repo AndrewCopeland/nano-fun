@@ -160,7 +160,7 @@ function readCurrentGameNumber(): number {
 }
 
 function readGameHistory(): History[] {
-    return JSON.parse(game_history_file)
+    return JSON.parse(readFile(game_history_file))
 }
 
 function appendGameHistory(history: History) {
