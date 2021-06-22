@@ -313,7 +313,6 @@ function distributeWinnings(response: any) {
 
         writeLastWinners(winners)
         
-
         // At this point we should have a list of `winners` and the amount that has been recieved
         // Now we just need to figure out how to distribute
         var payment = receivedAmount / BigInt(winners.length)
@@ -413,7 +412,7 @@ function main() {
     execute()
     setInterval(function() {
         execute()
-    }, 1000);
+    }, 1000 * 60 );
 
     stats()
     setInterval(() => {
